@@ -23,8 +23,10 @@ def sha256(message: bytes) -> bytes:
     # initial value of the internal state
     internal_state = b'j\t\xe6g\xbbg\xae\x85<n\xf3r\xa5O\xf5:Q\x0eR\x7f\x9b\x05h\x8c\x1f\x83\xd9\xab[\xe0\xcd\x19'
 
-    # TODO implement this
-    pass
+    message_length = len(message)
+    padding = build_padding(message_length)
+    return compress(message+padding, internal_state)
+
 
 
 def sha256_extend(given_hash: bytes, prefix_length: int, message_suffix: bytes) -> bytes:
@@ -42,8 +44,11 @@ def sha256_extend(given_hash: bytes, prefix_length: int, message_suffix: bytes) 
     assert len(given_hash) == 32
     assert prefix_length % 64 == 0
 
-    # TODO implement this
-    pass
+    suffix_length = len(message_suffix)
+    padding = build_padding(suffix_length + prefix_length)
+    z = compress(message_suffix + padding, given_hash)
+
+    return z
 
 
 def padded_size(message_len: int) -> int:
@@ -163,10 +168,13 @@ def main():
         'd7a8fbb307d7809469ca9abcb0082e4f8d5651e46d3cdb762d02d0bf37c9e592'
 
     # check that length extension works
+    suffix_message = b"This is a test message for MAC computation."
+
     given_hash = bytes.fromhex('fcb1b3142d1a0176f66f5901deef70df82ac0ee8860ef960cb99e4a525c9e427')
-    prefix_length = padded_size(16 + len(b'This is a test message for MAC computation.'))
+    prefix_length = padded_size(16 + len(suffix_message))
     message_suffix = b'???'
     new_hash = sha256_extend(given_hash, prefix_length, message_suffix)
+    new_has_hex = new_hash.hex()
     assert new_hash.hex() == 'bd7f1410e7e16fc34efb9d4efbcb702a7ce9860cf2c3033d7ea03c06f7237b6e'
 
 
