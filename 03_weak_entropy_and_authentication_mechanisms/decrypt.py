@@ -1,41 +1,42 @@
 #!/usr/bin/env python3
 
+from datetime import datetime
 import random
 import sys
 import time
+from tqdm import tqdm # install the tqdm package for a fancy progress bar
 from Crypto.Cipher import AES
 
 
-def decrypt(seed):
+def decrypt(date, input_file, output_file):
 
-    random.seed(seed)
-    key = random.randbytes(16)
-    with open("ciphertext.bin", 'rb') as f_in:
-        data = f_in.read()
+    date = datetime.strptime(date, '%Y-%m-%d')
+    t_start = int(date.timestamp())
 
-    nonce = data[:16]
-    tag = data[16:32]
-    aes = AES.new(key, AES.MODE_GCM, nonce=nonce)
-    try:
-      plainText = aes.decrypt_and_verify(data[32:], tag)
-      with open("ciphertext.txt", 'wb') as f_out:
-         f_out.write(plainText)# len(data) bytes
-      return plainText
-    finally:
-        return ""
+    with open(input_file, 'rb') as f_in:
+        nonce = f_in.read(16)
+        tag = f_in.read(16)
+        ciphertext = f_in.read()
 
+    #  for t in range(t_start, t_start + (60 * 60 * 24)):  # <- use this instead of the following line if you don't have tqdm
+    for t in tqdm(range(t_start, t_start + (60 * 60 * 24))):
+        random.seed(t)
+        key = random.randbytes(16)
+        try:
+            aes = AES.new(key, AES.MODE_GCM, nonce=nonce)
+            plaintext = aes.decrypt_and_verify(ciphertext, tag)
+            break
+        except:
+            continue
+    else:
+        print('decryption failed')
 
-
+    with open(output_file, 'wb') as f_out:
+        f_out.write(plaintext)
 
 
 if __name__ == '__main__':
-    #1632088800 -> 1632175200
-    #1632127063
-#    if len(sys.argv) != 3:
-#        print(f'usage: {sys.argv[0]} <src-file> <dst-file>', file=sys.stderr)
-#        exit(1)
-
-    for x in range(1632088800, 1632175200):
-        plainText = decrypt(x)
-        if(plainText != ""):
-            print(plainText)
+    if len(sys.argv) != 4:
+        print(f'usage: {sys.argv[0]} <date> <src-file> <dst-file>', file=sys.stderr)
+        exit(1)
+    decrypt(sys.argv[1], sys.argv[2], sys.argv[3])
