@@ -19,6 +19,10 @@ app.secret_key = settings.secret_key
 rsa_private_key = RSA.import_key(settings.rsa_private_key_pem)
 rsa_public_key = RSA.import_key(settings.rsa_public_key_pem)
 
+key = RSA.generate(2048)
+key_pem = key.export_key('PEM')
+key_string = key_pem.decode('utf-8')
+x = 1 +1
 
 @app.route('/')
 def index():
